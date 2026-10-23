@@ -1,3 +1,39 @@
+# 1.1.72
+
+## 中文
+
+- 版本 **1.1.72**（本 fork 首个版本）。
+- **修复 dsh 0.2.1 上红队预设加载失败**：dsh 0.2.1 起 `@deepseek-ai/dsh-tool-subagent` 移除了 `toolFilter` 与 `persona`
+  配置项，宿主加载预设时直接抛 `toolFilter is no longer supported; configure persona and tool plugins in an Agent
+  Preset and select it with agentPreset (spawn only)`，整份 `redteam` 预设拒绝加载，表现为「红队模式（加载失败）」。
+  本版删除预设里的 `toolFilter` 段，**保留 `maxDepth: 1`** 承担叶子约束——`maxDepth` 在 0.2.1 仍是硬约束
+  （达到上限时返回出错的工具结果，不是软提示），模型无法绕过。
+- **安装 / 更新源改到本 fork**：原作者 `YuJunZhiXue/dsh-purge` 已删库，npm 上的 `dsh-purge` 包 404。
+  原 README 的 `dsh plugin add dsh-purge` 与指向已删仓库的 tarball 地址**都装不上**。现全部改为
+  `https://github.com/i520e3e4/dsh-purge/archive/refs/heads/master.tar.gz`，并新增 `v1.1.72` tag 安装示例。
+- 插件内置的更新检查（`lib/update.js`）原先指向已删的上游，恒定失败；现指向本 fork，恢复可用。
+- 桌面端发版工作流的仓库守卫改为本仓库，推 `master` 可正常出 Release。
+- 原作者署名与原仓库链接**原样保留**（见「署名要求」章节与 `MIRROR-NOTICE.md`）。
+
+## English
+
+- **1.1.72** — first release of this fork.
+- **Fix red-team preset failing to load on dsh 0.2.1.** dsh 0.2.1 removed the `toolFilter` and `persona` config
+  options from `@deepseek-ai/dsh-tool-subagent`; the host now throws `toolFilter is no longer supported; configure
+  persona and tool plugins in an Agent Preset and select it with agentPreset (spawn only)` while loading, so the whole
+  `redteam` preset is rejected ("red-team mode failed to load"). This release drops the `toolFilter` block and keeps
+  `maxDepth: 1` as the leaf guard — `maxDepth` is still a hard constraint in 0.2.1 (the attempt returns an errored
+  tool result, not a soft hint), so the model cannot bypass it.
+- **Install / update sources repointed to this fork.** The original `YuJunZhiXue/dsh-purge` repository is deleted and
+  the `dsh-purge` npm package returns 404, so the documented `dsh plugin add dsh-purge` and the old tarball URL no
+  longer install. They now use `https://github.com/i520e3e4/dsh-purge/archive/refs/heads/master.tar.gz`, plus a
+  `v1.1.72` tag example.
+- The built-in update check (`lib/update.js`) pointed at the deleted upstream and always failed; it now points at this
+  fork and works again.
+- The desktop release workflow's repository guard now matches this repository, so pushing `master` publishes a Release.
+- The original author's attribution and upstream link are preserved verbatim (see the attribution section and
+  `MIRROR-NOTICE.md`).
+
 # 1.1.71
 
 ## 中文

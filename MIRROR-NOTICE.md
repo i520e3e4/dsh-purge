@@ -40,8 +40,11 @@
 
 ### 相对上游的唯一差异
 
-`master` 比上游 `master` **多一个 commit**，即本文件 `MIRROR-NOTICE.md`。
-上游原始内容本身零改动，可通过 `upstream-snapshot-6c1d638` 拿到，diff 命令见第四节。
+> **1.1.71 镜像时刻**：`master` 比上游 `master` **多一个 commit**，即本文件 `MIRROR-NOTICE.md`。
+> 上游原始内容本身零改动，可通过 `upstream-snapshot-6c1d638` 拿到，diff 命令见第四节。
+>
+> **1.1.72 起（本 fork 接手后）**：在上述基础上增加了 dsh 0.2.1 兼容修复与安装源改向，
+> 逐项清单见第六节「本 fork 的改动」。原始上游内容仍可通过 `upstream-snapshot-6c1d638` 完整取得。
 
 ---
 
@@ -103,3 +106,65 @@ diff /tmp/up.txt /tmp/mine.txt
 上游 README 在备份时载明：**项目暂停更新**，作者因工作安排暂停维护、不再发版、暂不收
 issue / PR，也不保证跟进新版 dsh；仓库仍可自用。该状态与「违规商用公示」章节一并完整保留在
 `README.md` / `README.zh-CN.md` 中，本镜像不修改其任何字句。
+
+---
+
+## 六、本 fork 的改动（1.1.72 起）
+
+> 本节由 `i520e3e4` 维护时新增。上游原作者已删库且不再发版，因此本 fork 承担「可安装 + 可用」的收尾工作。
+
+### 6.1 兼容性修复：dsh 0.2.1 上的红队预设加载失败
+
+dsh **0.2.1** 起，`@deepseek-ai/dsh-tool-subagent` 移除了 `toolFilter` 与 `persona` 两个配置项。
+宿主在加载 Agent Preset 时直接抛错：
+
+```
+tool-subagent: toolFilter is no longer supported; configure persona and tool plugins
+in an Agent Preset and select it with agentPreset (spawn only)
+```
+
+触发点仅一处：`presets/redteam/agent.cordis.yml` 中 `tool-subagent` 节点上的 `toolFilter.deny`。
+表现为**整份红队预设拒绝加载**，界面上显示「红队模式（加载失败）」。
+
+**处置**：删除 `toolFilter` 段，**保留 `maxDepth: 1`**。
+
+选择 `maxDepth` 单独承担叶子约束，而非按报错提示改用 `agentPreset` 子预设，理由：
+
+- `maxDepth` 在 0.2.1 仍是**硬约束** —— 达到上限时工具对模型可见，但每次尝试启动都检查当前深度，
+  被拒时返回出错的工具结果，不是软提示，模型无法绕过。
+- 改用 `agentPreset` 需要子预设完整声明全部工具集，而 0.2.1 文档明确写着「创建子级时，选中 preset 的激活
+  失败会拒绝组装」——为一个叶子约束去赌整份预设能否组装，风险远大于收益。
+
+`backgroundMode` 在 0.2.1 同样被移除，但属**静默 strip 而非报错**；因本预设需同时服务
+dsh 0.2.0（Web）与 0.2.1（桌面端），该字段予以保留，删掉会让 0.2.0 侧丢失 continuable 能力。
+
+### 6.2 安装 / 更新源改到本 fork
+
+| 位置 | 改前 | 改后 |
+| --- | --- | --- |
+| `package.json` → `repository` / `homepage` / `bugs` | `YuJunZhiXue/dsh-purge` | `i520e3e4/dsh-purge` |
+| `package.json` → `dsh.install.tarball` / `zip` / `git` | `YuJunZhiXue/dsh-purge` | `i520e3e4/dsh-purge` |
+| `lib/update.js` → `REPO`（内置更新检查） | `YuJunZhiXue/dsh-purge` | `i520e3e4/dsh-purge` |
+| `lib/redteam/ui.js` → `githubRepoOf()` 兜底值 | `YuJunZhiXue/dsh-purge` | `i520e3e4/dsh-purge` |
+| `client.js` → `welcome.repo`（欢迎弹窗 ×2） | `YuJunZhiXue/dsh-purge` | `i520e3e4/dsh-purge` |
+| `.github/workflows/release.yml` → 仓库守卫 | `YuJunZhiXue/dsh-purge` | `i520e3e4/dsh-purge` |
+| `README.md` / `README.zh-CN.md` → 安装命令与链接 | npm 包名 + 已删上游 tarball | 本 fork tarball + `v1.1.72` tag 示例 |
+
+**为什么必须改**：原作者仓库已删库，npm 上的 `dsh-purge` 包也返回 404。原文档给出的
+`dsh plugin --profile web add dsh-purge` 与指向 `YuJunZhiXue/dsh-purge` 的 tarball 地址
+**两条都装不上**；插件内置的更新检查恒定失败。不改这两处，「照着文档装」必然失败。
+
+### 6.3 明确未改动的部分
+
+- `LICENSE`（MIT）原样保留。
+- 署名要求与违规商用公示章节**逐字保留**；原作者署名与原仓库链接在 README 中**原样保留**。
+- 提示词、技能、补丁定义（`lib/core.js` 等）**一行未动**。
+- 原有 73 个 tag 与 `upstream-archive` 分支**全部保留**，历史可追溯。
+- `README.md` / `README.zh-CN.md` 中「适配范围」「署名要求」「违规商用公示」等原作者叙述段落**未做删改**。
+
+### 6.4 后续维护约定
+
+上游既已删库，本 fork 自行承担适配。dsh 每升一个大版本都可能再冒出新的废弃字段，
+届时按同样的方式定位报错来源 → 改预设 → 验证 → 提 commit。
+已知风险：dsh 升到 0.3 线后，插件的文本锚点补丁可能大面积失配（表现为 `na` / `skipped` 跳过而非误改）。
+

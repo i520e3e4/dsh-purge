@@ -32,3 +32,7 @@ default-prompt-inject.md
 /official-harness-payload.7z
 *.asar
 *.asar.bak
+
+# 本地手工备份
+*.bak
+*.bak-*
